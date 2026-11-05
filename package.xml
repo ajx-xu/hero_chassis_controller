@@ -3,9 +3,9 @@
   <name>hero_chassis_controller</name>
   <version>0.1.0</version>
   <description>A custom PID controller for a Mecanum wheel chassis in Gazebo.</description>
-  <maintainer email="x0709ajx@163.com">你的名字</maintainer>
+  <maintainer email="x0709ajx@163.com">ajx-xu</maintainer>
   <license>BSD</license>
-  <author email="x0709ajx@163.com">你的名字</author>
+  <author email="x0709ajx@163.com">ajx-xu</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

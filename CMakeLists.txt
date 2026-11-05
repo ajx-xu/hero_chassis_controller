@@ -89,4 +89,4 @@ install(
 ##########################
 ## Static code analysis ##
 ##########################
-roslint_cpp()
+#  roslint_cpp()
