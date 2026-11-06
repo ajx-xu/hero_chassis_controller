@@ -1,5 +1,6 @@
 #pragma once
 #include <ros/ros.h>
+#include "hero_chassis_controller/wheel.h"
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <control_toolbox/pid.h>
@@ -7,8 +8,7 @@
 #include <pluginlib/class_list_macros.hpp>
 namespace hero_chassis_controller {
 
-    class HeroChassisController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
-    public:
+    class HeroChassisController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {    public:
         HeroChassisController() = default;
         ~HeroChassisController() override = default;
 
@@ -18,23 +18,18 @@ namespace hero_chassis_controller {
         void stopping(const ros::Time& time) override;
 
     private:
-        // 硬件接口
-        std::vector<hardware_interface::JointHandle> joints_;
+        // 硬件接口 (被替换为 Wheel 对象)
+        std::vector<Wheel> wheels_;
 
-        // PID 控制器
-        std::vector<control_toolbox::Pid> pids_;
-        std::vector<double> wheel_velocities_;
-
-        // 会用的参数
+        // 订阅者与速度指令
         ros::Subscriber cmd_vel_sub_;
         geometry_msgs::Twist cmd_vel_;
 
-        // 运动学参数 (在 yaml 配置文件里读取)
+        // 运动学参数
         double wheel_radius_;
-        double wheel_separation_x_; // 前后轮距的一半
-        double wheel_separation_y_; // 左右轮距的一半
+        double wheel_separation_x_;
+        double wheel_separation_y_;
 
-        // 回调函数声明
         void cmdVelCallback(const geometry_msgs::Twist& msg);
     };
 
