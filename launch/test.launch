@@ -1,0 +1,19 @@
+<launch>
+    <!-- 1. 启动 Gazebo 空世界 -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+    </include>
+
+    <!-- 2. 加载官方的 hero 模型 -->
+    <param name="robot_description" command="$(find xacro)/xacro $(find rm_description_for_task)/urdf/hero/hero.urdf.xacro" />
+
+    <!-- 3. 在 Gazebo 中生成 -->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model hero_robot" />
+
+    <!-- 4. 加载你的 PID 参数 -->
+    <rosparam file="$(find hero_chassis_controller)/config/pid_params.yaml" command="load"/>
+
+    <!-- 5. 启动控制器 -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="hero_chassis_controller joint_state_controller" />
+</launch>

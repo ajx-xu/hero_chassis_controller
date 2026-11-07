@@ -43,7 +43,12 @@ catkin_package(
         geometry_msgs
         nav_msgs
 )
-
+install(DIRECTORY config launch urdf
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+install(FILES hero_chassis_controller_plugin.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 ###########
 ## Build ##
 ###########
