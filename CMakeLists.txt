@@ -21,6 +21,7 @@ find_package(catkin REQUIRED
         hardware_interface
         geometry_msgs
         nav_msgs
+        tf
         roslint
 )
 
@@ -42,6 +43,7 @@ catkin_package(
         hardware_interface
         geometry_msgs
         nav_msgs
+        tf
 )
 install(DIRECTORY config launch urdf
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

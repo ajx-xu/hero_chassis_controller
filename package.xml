@@ -18,6 +18,7 @@
   <depend>controller_interface</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>tf</depend>
   <build_depend>roslint</build_depend>
   <export>
     <controller_interface plugin="${prefix}/hero_chassis_controller_plugin.xml"/>

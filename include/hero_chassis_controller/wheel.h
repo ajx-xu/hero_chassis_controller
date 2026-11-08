@@ -43,7 +43,9 @@ namespace hero_chassis_controller {
             target_velocity_ = 0.0;
             joint_handle_.setCommand(0.0);
         }
-
+        double getVelocity() const {
+            return joint_handle_.getVelocity();
+        }
     private:
         hardware_interface::JointHandle joint_handle_;
         control_toolbox::Pid pid_;

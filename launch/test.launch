@@ -16,4 +16,11 @@
 
     <!-- 5. 启动控制器 -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="hero_chassis_controller joint_state_controller" />
+
+        <!-- 6. 启动键盘控制节点 -->
+        <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen">
+            <!-- 设置默认速度，避免一按就飞出去 -->
+            <param name="speed" value="0.5"/>
+            <param name="turn" value="1.0"/>
+        </node>
 </launch>

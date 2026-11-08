@@ -6,6 +6,8 @@
 #include <control_toolbox/pid.h>
 #include <geometry_msgs/Twist.h>
 #include <pluginlib/class_list_macros.hpp>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 namespace hero_chassis_controller {
 
     class HeroChassisController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {    public:
@@ -29,7 +31,10 @@ namespace hero_chassis_controller {
         double wheel_radius_;
         double wheel_separation_x_;
         double wheel_separation_y_;
-
+        // 里程计相关
+        ros::Publisher odom_pub_;
+        tf::TransformBroadcaster tf_broadcaster_;
+        double x_, y_, yaw_; // 积分累加的坐标
         void cmdVelCallback(const geometry_msgs::Twist& msg);
     };
 
