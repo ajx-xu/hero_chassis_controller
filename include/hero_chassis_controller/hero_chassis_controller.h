@@ -1,4 +1,5 @@
 #pragma once
+
 #include <ros/ros.h>
 #include "hero_chassis_controller/wheel.h"
 #include <controller_interface/controller.h>
@@ -8,9 +9,12 @@
 #include <pluginlib/class_list_macros.hpp>
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+
 namespace hero_chassis_controller {
 
-    class HeroChassisController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {    public:
+    class HeroChassisController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
+    public:
         HeroChassisController() = default;
         ~HeroChassisController() override = default;
 
@@ -20,6 +24,7 @@ namespace hero_chassis_controller {
         void stopping(const ros::Time& time) override;
 
     private:
+        ros::NodeHandle controller_nh_;
         // 硬件接口 (被替换为 Wheel 对象)
         std::vector<Wheel> wheels_;
 
@@ -31,10 +36,16 @@ namespace hero_chassis_controller {
         double wheel_radius_;
         double wheel_separation_x_;
         double wheel_separation_y_;
+
         // 里程计相关
         ros::Publisher odom_pub_;
         tf::TransformBroadcaster tf_broadcaster_;
-        double x_, y_, yaw_; // 积分累加的坐标
+        double x_, y_, yaw_;
+
+        // TF 与 模式切换
+        tf::TransformListener tf_listener_;
+        bool use_world_frame_;
+
         void cmdVelCallback(const geometry_msgs::Twist& msg);
     };
 

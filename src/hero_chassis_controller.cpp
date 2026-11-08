@@ -5,6 +5,7 @@
 namespace hero_chassis_controller {
 
     bool HeroChassisController::init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) {
+        controller_nh_ = controller_nh;
         std::vector<std::string> joint_names;
         if (!controller_nh.getParam("joints", joint_names)) {
             ROS_ERROR("Could not find joint names parameter");
@@ -15,7 +16,6 @@ namespace hero_chassis_controller {
         controller_nh.param("wheel_separation_x", wheel_separation_x_, 0.25);
         controller_nh.param("wheel_separation_y", wheel_separation_y_, 0.25);
 
-        // 初始化轮子对象
         for (const auto& name : joint_names) {
             Wheel wheel;
             if (!wheel.init(hw->getHandle(name), controller_nh, name)) {
@@ -26,9 +26,11 @@ namespace hero_chassis_controller {
 
         cmd_vel_sub_ = controller_nh.subscribe("/cmd_vel", 1, &HeroChassisController::cmdVelCallback, this);
 
-        // 初始化里程计 (移到 return true 之前)
         x_ = 0.0; y_ = 0.0; yaw_ = 0.0;
         odom_pub_ = controller_nh.advertise<nav_msgs::Odometry>("/odom", 50);
+
+        // 读取初始模式
+        controller_nh.param("use_world_frame", use_world_frame_, false);
 
         ROS_INFO("HeroChassisController initialized with Wheel objects.");
         return true;
@@ -48,19 +50,39 @@ namespace hero_chassis_controller {
     }
 
     void HeroChassisController::update(const ros::Time& time, const ros::Duration& period) {
+        // 获取底盘目标速度
         double vx = cmd_vel_.linear.x;
         double vy = cmd_vel_.linear.y;
         double wz = cmd_vel_.angular.z;
 
+        // ========== 选做题 7：世界坐标速度转换 ==========
+        // 这里每次循环都会判断 use_world_frame_ 的值
+        controller_nh_.param("use_world_frame", use_world_frame_, false);
+        if (use_world_frame_) {
+            try {
+                tf::StampedTransform transform;
+                tf_listener_.lookupTransform("odom", "base_link", ros::Time(0), transform);
+
+                double roll, pitch, yaw;
+                tf::Matrix3x3(transform.getRotation()).getRPY(roll, pitch, yaw);
+
+                double vx_body = vx * cos(yaw) + vy * sin(yaw);
+                double vy_body = -vx * sin(yaw) + vy * cos(yaw);
+
+                vx = vx_body;
+                vy = vy_body;
+            } catch (tf::TransformException &ex) {
+                ROS_WARN("TF Exception: %s", ex.what());
+            }
+        }
+
         double L = wheel_separation_x_ + wheel_separation_y_;
 
-        // 计算四个轮子的期望速度
-        double target_vel_0 = (vx - vy - wz * L) / wheel_radius_; // 左前
-        double target_vel_1 = (vx + vy + wz * L) / wheel_radius_; // 右前
-        double target_vel_2 = (vx + vy - wz * L) / wheel_radius_; // 左后
-        double target_vel_3 = (vx - vy + wz * L) / wheel_radius_; // 右后
+        double target_vel_0 = (vx - vy - wz * L) / wheel_radius_;
+        double target_vel_1 = (vx + vy + wz * L) / wheel_radius_;
+        double target_vel_2 = (vx + vy - wz * L) / wheel_radius_;
+        double target_vel_3 = (vx - vy + wz * L) / wheel_radius_;
 
-        // 分发给各个轮子对象，并让它们各自执行 PID
         if (wheels_.size() == 4) {
             wheels_[0].setTargetVelocity(target_vel_0);
             wheels_[1].setTargetVelocity(target_vel_1);
@@ -74,25 +96,20 @@ namespace hero_chassis_controller {
 
         // =========== 选做题 6：正运动学里程计 ===========
         if (wheels_.size() == 4) {
-            // 1. 获取四个轮子的实际速度
-            double actual_v0 = wheels_[0].getVelocity(); // 左前
-            double actual_v1 = wheels_[1].getVelocity(); // 右前
-            double actual_v2 = wheels_[2].getVelocity(); // 左后
-            double actual_v3 = wheels_[3].getVelocity(); // 右后
+            double actual_v0 = wheels_[0].getVelocity();
+            double actual_v1 = wheels_[1].getVelocity();
+            double actual_v2 = wheels_[2].getVelocity();
+            double actual_v3 = wheels_[3].getVelocity();
 
-            // 2. 正运动学公式：根据轮速反推底盘速度
-            // 注意：这里的 L 直接使用上面算好的，不要再加 double L = ... 了
             double vx_act = (actual_v0 + actual_v1 + actual_v2 + actual_v3) * wheel_radius_ / 4.0;
             double vy_act = (-actual_v0 + actual_v1 + actual_v2 - actual_v3) * wheel_radius_ / 4.0;
             double wz_act = (-actual_v0 + actual_v1 - actual_v2 + actual_v3) * wheel_radius_ / (4.0 * L);
 
-            // 3. 积分累加得到坐标
             double dt = period.toSec();
             x_ += (vx_act * cos(yaw_) - vy_act * sin(yaw_)) * dt;
             y_ += (vx_act * sin(yaw_) + vy_act * cos(yaw_)) * dt;
             yaw_ += wz_act * dt;
 
-            // 4. 组装并发布 Odometry 消息
             nav_msgs::Odometry odom;
             odom.header.stamp = time;
             odom.header.frame_id = "odom";
@@ -114,7 +131,6 @@ namespace hero_chassis_controller {
 
             odom_pub_.publish(odom);
 
-            // 5. 广播 TF 变换 (odom -> base_link)
             tf::Transform transform;
             transform.setOrigin(tf::Vector3(x_, y_, 0.0));
             transform.setRotation(q);
@@ -130,5 +146,4 @@ namespace hero_chassis_controller {
 
 } // namespace hero_chassis_controller
 
-// 注册插件，让 ROS 能加载它
 PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::HeroChassisController, controller_interface::ControllerBase)

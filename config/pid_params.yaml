@@ -3,6 +3,8 @@ joint_state_controller:
   publish_rate: 50
 
 hero_chassis_controller:
+  use_world_frame: false  # 设为 false：底盘坐标系（跟着车头走）
+  # use_world_frame: true  # 设为 true：世界坐标系（无视车头，固定方向）
   type: hero_chassis_controller/HeroChassisController
   joints:
     - left_front_wheel_joint
