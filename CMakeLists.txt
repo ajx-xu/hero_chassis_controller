@@ -23,8 +23,11 @@ find_package(catkin REQUIRED
         nav_msgs
         tf
         roslint
+        dynamic_reconfigure
 )
-
+generate_dynamic_reconfigure_options(
+        cfg/PID.cfg
+)
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -45,6 +48,7 @@ catkin_package(
         nav_msgs
         tf
 )
+
 install(DIRECTORY config launch urdf
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
@@ -97,3 +101,7 @@ install(
 ## Static code analysis ##
 ##########################
 #  roslint_cpp()
+
+
+# 确保你的库依赖于生成的动态参数头文件
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)

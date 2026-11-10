@@ -46,6 +46,13 @@ namespace hero_chassis_controller {
         double getVelocity() const {
             return joint_handle_.getVelocity();
         }
+        // 新增：用于动态更新 PID 参数
+        // 新增：用于动态更新 PID 参数
+        void setPID(double p, double i, double d) {
+            // 强制重置 PID 参数（p, i, d, i_max, i_min）
+            // 这里把 i_max 和 i_min 设为 1.0 和 -1.0，或者根据你需要调整
+            pid_.setGains(p, i, d, 1.0, -1.0); 
+        }
     private:
         hardware_interface::JointHandle joint_handle_;
         control_toolbox::Pid pid_;

@@ -10,6 +10,9 @@
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <dynamic_reconfigure/server.h>
+#include <hero_chassis_controller/PIDConfig.h>
+#include <control_toolbox/pid.h>
 
 namespace hero_chassis_controller {
 
@@ -24,6 +27,11 @@ namespace hero_chassis_controller {
         void stopping(const ros::Time& time) override;
 
     private:
+        boost::shared_ptr<dynamic_reconfigure::Server<hero_chassis_controller::PIDConfig>> dynamic_server_;
+        dynamic_reconfigure::Server<hero_chassis_controller::PIDConfig>::CallbackType dynamic_cb_;
+
+        // 回调函数声明
+        void dynamicParamCallback(hero_chassis_controller::PIDConfig &config, uint32_t level);
         ros::NodeHandle controller_nh_;
         // 硬件接口 (被替换为 Wheel 对象)
         std::vector<Wheel> wheels_;

@@ -31,7 +31,10 @@ namespace hero_chassis_controller {
 
         // 读取初始模式
         controller_nh.param("use_world_frame", use_world_frame_, false);
-
+        // 初始化动态调参服务器
+        dynamic_server_.reset(new dynamic_reconfigure::Server<hero_chassis_controller::PIDConfig>(controller_nh));
+        dynamic_cb_ = boost::bind(&HeroChassisController::dynamicParamCallback, this, _1, _2);
+        dynamic_server_->setCallback(dynamic_cb_);
         ROS_INFO("HeroChassisController initialized with Wheel objects.");
         return true;
     }
@@ -143,7 +146,14 @@ namespace hero_chassis_controller {
             wheel.stop();
         }
     }
-
+    void HeroChassisController::dynamicParamCallback(hero_chassis_controller::PIDConfig &config, uint32_t level) {
+        if (wheels_.size() == 4) {
+            // 这里需要你在 wheel.h 里加一个更新参数的接口
+            wheels_[0].setPID(config.lf_p, config.lf_i, config.lf_d);
+            wheels_[1].setPID(config.rf_p, config.rf_i, config.rf_d);
+            ROS_INFO("PID Params Updated via rqt_reconfigure!");
+        }
+    }
 } // namespace hero_chassis_controller
 
 PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::HeroChassisController, controller_interface::ControllerBase)
